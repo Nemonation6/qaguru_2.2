@@ -1,4 +1,5 @@
-pytest
-PyPDF2
+pytest~=7.1.3
+PyPDF2~=2.11.1
 xlrd
-openpyxl
+openpyxl~=3.0.10
+selene~=2.0.0b12

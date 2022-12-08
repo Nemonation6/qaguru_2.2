@@ -1,41 +1,73 @@
 import os
 
-import pytest
 from selene.support.shared import browser
 from selene import have, command
 
+from tests.model import app
+from tests.model.utilities.path import path_to
+from tests.users import danil
 
-def given_opened_text_box_page():
-    browser.open("/automation-practice-form")
-    ads = browser.all('[id^=google_ads_][id$=container__]')
-    if ads.wait.until(have.size_greater_than_or_equal(3)):
-        ads.perform(command.js.remove)
+
+state = browser.element('#state')
 
 
 def test_student_registration_form():
-    given_opened_text_box_page()
-    browser.should(have.title("ToolsQA"))
-    browser.element("#firstName").type("Dan")
-    browser.element("#lastName").type("Roz")
-    browser.element("#userEmail").type("DR@olol.com")
-    browser.element("[for=gender-radio-1]").click()
-    browser.element("#userNumber").type("1234567890")
+
+    app.practise_form_page.given_opened_text_box_page()
+
+    #WHEN
+
+    app.practise_form_page.verify_title("ToolsQA")
+
+    app.practise_form_page.set_full_name(danil.student.name, danil.student.last_name)
+
+    app.practise_form_page.set_email(danil.student.email)
+
+    app.practise_form_page.set_gender(danil.student.gender)
+
+    app.practise_form_page.set_phone_number(danil.student.user_number)
+
     browser.execute_script("window.scrollTo(0, 100)")
-    browser.element('#dateOfBirthInput').perform(command.js.set_value('26 May 1999'))
-    browser.element('#subjectsInput').click().type("ma").press_enter()
+
+    app.practise_form_page.set_birth_date(danil.student.birth_month,
+                                          danil.student.birth_year, danil.student.birth_day)
+
+    app.practise_form_page.add_subjects(danil.student.subjects)
+
+    app.practise_form_page.add_hobbies(danil.student.hobbies)
+
     browser.execute_script("window.scrollTo(0, 200)")
-    hobby_checkbox_1.click()
-    hobby_checkbox_2.click()
-    hobby_checkbox_3.click()
-    browser.element('#uploadPicture').send_keys(os.path.abspath('tests/kitten.jpg'))
-    browser.element('#currentAddress').type('Tbilisi lol str 56 b 22 apt')
+
+    app.practise_form_page.upload_picture(danil.student.picture_file)
+
+    app.practise_form_page.set_current_adress(danil.student.current_address)
+
     browser.execute_script("window.scrollTo(0, 400)")
-    state.type("har").press_enter()
-    city.type("a").press_enter()
 
+    app.practise_form_page.set_state(danil.student.state)
 
-hobby_checkbox_1 = browser.element('[for="hobbies-checkbox-1"]')
-hobby_checkbox_2 = browser.element('[for="hobbies-checkbox-2"]')
-hobby_checkbox_3 = browser.element('[for="hobbies-checkbox-3"]')
-state = browser.element('#react-select-3-input')
-city = browser.element('#react-select-4-input')
+    app.practise_form_page.set_city(danil.student.city)
+
+    app.practise_form_page.submit_form()
+
+    #THEN
+
+    subjects = app.practise_form_page.get_subjects_list(danil.student.subjects)
+
+    hobbies = app.practise_form_page.get_hobby_list(danil.student.hobbies)
+
+    app.practise_form_page.should_have_submitted(
+        [
+            ('Student Name', f'{danil.student.name} {danil.student.last_name}'),
+            ('Student Email', danil.student.email),
+            ('Gender', danil.student.gender.value),
+            ('Mobile', danil.student.user_number),
+            ('Date of Birth', f'{danil.student.birth_day} {danil.student.birth_month},{danil.student.birth_year}'),
+            ('Subjects', subjects),
+            ('Hobbies', hobbies),
+            ('Picture', danil.student.picture_file),
+            ('Address', danil.student.current_address),
+            ('State and City', f'{danil.student.state} {danil.student.city}')
+        ],
+    )
+
